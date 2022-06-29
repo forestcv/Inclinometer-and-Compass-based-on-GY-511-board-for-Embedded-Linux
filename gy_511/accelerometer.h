@@ -10,12 +10,13 @@
 
 namespace gy511::accelerometer
 {
-    class Accelerometer : protected I2cIMUDevice
+    class Accelerometer : public imu::I2cIMUDevice
     {
     public:
         Accelerometer(std::shared_ptr<I2CDevice> device);
         void init() override;
         void start() override;
+        void finish() override;
 
     private:
         bool isInited = false;
@@ -30,7 +31,7 @@ namespace gy511::accelerometer
         void createInitializationQueue();
         std::vector<CoordinatesReadingStages> createCoordinatesReadingQueue();
         void initialize();
-        bool readCoordinates(Coordinates &coordinates);
+        bool readCoordinates(imu::Coordinates &coordinates);
     };
 };
 

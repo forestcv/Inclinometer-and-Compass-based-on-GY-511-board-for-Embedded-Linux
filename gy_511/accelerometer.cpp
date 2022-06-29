@@ -4,6 +4,7 @@
 #include <chrono>
 
 using namespace gy511::accelerometer;
+using namespace imu;
 
 Accelerometer::Accelerometer(std::shared_ptr<I2CDevice> device) : I2cIMUDevice(device)
 {
@@ -26,14 +27,21 @@ void Accelerometer::start()
     executionThread.detach();
 }
 
-#include <iostream>
+void Accelerometer::finish()
+{
+    execution.store(false, std::memory_order_acquire);
+}
+
 void Accelerometer::exec()
 {
     while (execution.load(std::memory_order_acquire))
     {
         Coordinates coordinates;
         if (readCoordinates(coordinates))
-            std::cout << coordinates.x << "\t" << coordinates.y << "\t" << coordinates.z << std::endl;
+        {
+            for (auto handler : handlers)
+                handler(coordinates);
+        }
         std::this_thread::sleep_for(std::chrono::milliseconds(40));
     }
 }
@@ -85,7 +93,7 @@ void Accelerometer::initialize()
         case InitializationStages::SET_FULL_SCALE:
         {
             stageSuccess = writeRegister(Registers::CTRL_REG4_A, Masks::FS,
-                                         static_cast<uint8_t>(FS::G8));
+                                         static_cast<uint8_t>(FS::G2));
             break;
         }
         case InitializationStages::SET_HIGH_RESOLUTION_MODE:
@@ -115,7 +123,7 @@ void Accelerometer::initialize()
     std::cout << "init ok" << std::endl;
 }
 
-bool Accelerometer::readCoordinates(Accelerometer::Coordinates &coordinates)
+bool Accelerometer::readCoordinates(Coordinates &coordinates)
 {
     static int attemptionsCounter = 0;
     coordinatesReadingQueueIt = coordinatesReadingQueue.begin();
@@ -155,13 +163,13 @@ bool Accelerometer::readCoordinates(Accelerometer::Coordinates &coordinates)
             attemptionsCounter++;
         }
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        std::this_thread::sleep_for(std::chrono::milliseconds(3));
     }
 
     coordinates.x = rawCoordinates.x.val;
     coordinates.y = rawCoordinates.y.val;
     coordinates.z = rawCoordinates.z.val;
-    
+
     return true;
 }
 

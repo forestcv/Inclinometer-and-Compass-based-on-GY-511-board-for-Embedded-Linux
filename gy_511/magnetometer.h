@@ -11,12 +11,13 @@
 
 namespace gy511::magnetometer
 {
-    class Magnetometer : protected I2cIMUDevice
+    class Magnetometer : public imu::I2cIMUDevice
     {
     public:
         Magnetometer(std::shared_ptr<I2CDevice> device);
         void init() override;
         void start() override;
+        void finish() override;
 
     private:
         bool isInited = false;
@@ -31,7 +32,7 @@ namespace gy511::magnetometer
         void createInitializationQueue();
         std::vector<CoordinatesReadingStages> createCoordinatesReadingQueue();
         void initialize();
-        bool readCoordinates(Coordinates &coordinates);
+        bool readCoordinates(imu::Coordinates &coordinates);
     };
 };
 

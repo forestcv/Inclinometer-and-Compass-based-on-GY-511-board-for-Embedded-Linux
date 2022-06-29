@@ -3,6 +3,7 @@
 #include <thread>
 #include <chrono>
 
+using namespace imu;
 using namespace gy511::magnetometer;
 
 Magnetometer::Magnetometer(std::shared_ptr<I2CDevice> device) : I2cIMUDevice(device)
@@ -26,6 +27,11 @@ void Magnetometer::start()
     executionThread.detach();
 }
 
+void Magnetometer::finish()
+{
+    execution.store(false, std::memory_order_acquire);
+}
+
 #include <iostream>
 void Magnetometer::exec()
 {
@@ -33,7 +39,11 @@ void Magnetometer::exec()
     {
         Coordinates coordinates;
         if (readCoordinates(coordinates))
-            std::cout << coordinates.x << "\t" << coordinates.y << "\t" << coordinates.z << std::endl;
+        {
+            // std::cout << coordinates.x << "\t" << coordinates.y << "\t" << coordinates.z << std::endl;
+            for (auto handler : handlers)
+                handler(coordinates);
+        }
         std::this_thread::sleep_for(std::chrono::milliseconds(40));
     }
 }
@@ -104,7 +114,7 @@ void Magnetometer::initialize()
     std::cout << "init ok" << std::endl;
 }
 
-bool Magnetometer::readCoordinates(Magnetometer::Coordinates &coordinates)
+bool Magnetometer::readCoordinates(Coordinates &coordinates)
 {
     static int attemptionsCounter = 0;
     coordinatesReadingQueueIt = coordinatesReadingQueue.begin();
@@ -150,6 +160,6 @@ bool Magnetometer::readCoordinates(Magnetometer::Coordinates &coordinates)
     coordinates.x = rawCoordinates.x.val;
     coordinates.y = rawCoordinates.y.val;
     coordinates.z = rawCoordinates.z.val;
-    
+
     return true;
 }

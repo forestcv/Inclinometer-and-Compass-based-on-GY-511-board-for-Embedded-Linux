@@ -4,12 +4,14 @@
 #include <memory>
 #include <thread>
 
-#include "i2c/i2c.h"
+#include "gy_511/gy511_based_imu.h"
 #include "gy_511/accelerometer.h"
 #include "gy_511/magnetometer.h"
+#include "i2c/i2c.h"
 
 int main()
 {
+    /*
     int bus = 1;
 
     if ((bus = i2c_open("/dev/i2c-1")) == -1)
@@ -21,35 +23,19 @@ int main()
     auto accPtr = std::make_shared<i2c_device>(device);
     std::memset(&device, 0, sizeof(device));
 
-    accPtr->bus = bus;       /* Bus 0 */
-    accPtr->addr = 0x19;     /* Slave address is 0x50, 7-bit */
-    accPtr->iaddr_bytes = 1; /* Device internal address is 1 byte */
-    accPtr->page_bytes = 8;  /* Device are capable of 16 bytes per page */
-
-    /*
-    char buffer[1];
-    ssize_t size = sizeof(buffer);
-    memset(buffer, 0, sizeof(buffer));
-
-    if ((i2c_read(&device, 0x02, buffer, size)) != size)
-    {
-
-        std::cout << "Reading error" << std::endl;
-    }
-
-    // uint val =  buffer[0];
-    std::cout << (uint)buffer[0] << std::endl;
-
-    */
-
+    accPtr->bus = bus;
+    accPtr->addr = 0x19;
+    accPtr->iaddr_bytes = 1;
+    accPtr->page_bytes = 8;
+    
     I2CDevice magDevice;
     auto magPtr = std::make_shared<i2c_device>(magDevice);
     std::memset(&magDevice, 0, sizeof(magDevice));
 
-    magPtr->bus = bus;       /* Bus 0 */
-    magPtr->addr = 0x1e;     /* Slave address is 0x50, 7-bit */
-    magPtr->iaddr_bytes = 1; /* Device internal address is 1 byte */
-    magPtr->page_bytes = 8;  /* Device are capable of 16 bytes per page */
+    magPtr->bus = bus;
+    magPtr->addr = 0x1e;
+    magPtr->iaddr_bytes = 1;
+    magPtr->page_bytes = 8;
 
     gy511::accelerometer::Accelerometer acc(accPtr);
 
@@ -69,6 +55,14 @@ int main()
 
     std::this_thread::sleep_for(std::chrono::milliseconds(10000000));
     i2c_close(bus);
+    */
+
+// /*
+    gy511::Gy511BasedIMU imu{};
+    imu.setup();
+    imu.start();
+    std::this_thread::sleep_for(std::chrono::milliseconds(1000000));
+    // */
 
     return 0;
 }
