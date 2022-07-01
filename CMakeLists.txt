@@ -7,9 +7,9 @@ add_executable(${PROJECT_NAME}
     i2c/i2c.c
     i2c/i2c.h
 
+    imu/imu.cpp
     imu/imu.h
     imu/i2c_imu_device.h
-
 
     gy_511/gy511_based_imu.cpp
     gy_511/gy511_based_imu.h
@@ -19,6 +19,7 @@ add_executable(${PROJECT_NAME}
     gy_511/magnetometer.h
     gy_511/registers.h
 
+    calibration/calibration.h
     calibration/min_max_calibration.cpp
     calibration/min_max_calibration.h
 )

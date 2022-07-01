@@ -4,6 +4,7 @@
 #include <memory>
 #include <thread>
 
+#include "imu/imu.h"
 #include "gy_511/gy511_based_imu.h"
 #include "gy_511/accelerometer.h"
 #include "gy_511/magnetometer.h"

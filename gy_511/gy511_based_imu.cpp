@@ -3,13 +3,7 @@
 #include "accelerometer.h"
 #include "magnetometer.h"
 
-#include <iostream>
 #include <cstring>
-#include <string>
-#include <memory>
-#include <thread>
-#include <functional>
-#include <cmath>
 
 using namespace gy511;
 using namespace gy511::accelerometer;
@@ -43,75 +37,7 @@ bool Gy511BasedIMU::setup()
     magPtr->iaddr_bytes = 1; /* Device internal address is 1 byte */
     magPtr->page_bytes = 8;  /* Device are capable of 16 bytes per page */
 
-    accelerometer = std::make_shared<Accelerometer>(accPtr);
-    magnetometer = std::make_shared<Magnetometer>(magPtr);
-
-    accelerometer->registerCoordinatesHandler(std::bind(&Gy511BasedIMU::accCoordinatesHandler,
-                                                        this, std::placeholders::_1));
-    magnetometer->registerCoordinatesHandler(std::bind(&Gy511BasedIMU::magCoordinatesHandler,
-                                                       this, std::placeholders::_1));
+    Imu::setup();
 
     return true;
-}
-
-void Gy511BasedIMU::start()
-{
-    accelerometer->init();
-    magnetometer->init();
-
-    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-
-    accelerometer->start();
-    // magnetometer->start();
-
-    execution.store(true, std::memory_order_acquire);
-    std::thread executionThread(&Gy511BasedIMU::exec, this);
-    executionThread.detach();
-}
-
-void Gy511BasedIMU::finish()
-{
-    accelerometer->finish();
-    magnetometer->finish();
-}
-
-void Gy511BasedIMU::calibrate(imu::CalibrationType type)
-{
-}
-
-void Gy511BasedIMU::exec()
-{
-    while (execution.load(std::memory_order_acquire))
-    {
-        // std::unique_lock<std::mutex> accLock(accMutex);
-        // accDataReadyCV.wait(accLock);
-        // std::unique_lock<std::mutex> magLock(accMutex);
-        // magDataReadyCV.wait(magLock);
-        updateAngles();
-
-        std::cout << angles.pitch << "\t" << angles.roll << "\t" << angles.yaw << std::endl;
-
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    }
-}
-
-void Gy511BasedIMU::updateAngles()
-{
-    angles.pitch = std::atan2(static_cast<double>(currentAccCoordinates.x),
-                              static_cast<double>(currentAccCoordinates.z)) * imu::RadToDegree;
-    angles.roll = std::atan2(static_cast<double>(currentAccCoordinates.y), currentAccCoordinates.z) * imu::RadToDegree;
-    angles.yaw = std::atan2(static_cast<double>(currentMagCoordinates.x), currentMagCoordinates.y) * imu::RadToDegree;
-}
-
-void Gy511BasedIMU::accCoordinatesHandler(const imu::Coordinates &coordinates)
-{
-    currentAccCoordinates = coordinates;
-    // std::cout << "imu:\t" << currentAccCoordinates.x << "\t" << currentAccCoordinates.z << std::endl;
-    accDataReadyCV.notify_one();
-}
-
-void Gy511BasedIMU::magCoordinatesHandler(const imu::Coordinates &coordinates)
-{
-    currentMagCoordinates = coordinates;
-    magDataReadyCV.notify_one();
 }
