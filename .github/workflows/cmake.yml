@@ -17,9 +17,9 @@ jobs:
           submodules: true
       - run: sudo apt-get install libeigen3-dev
       - run: sudo apt-get install libboost-all-dev
-      - run: cmake . -DPATCH_VERSION=${{ github.run_number }} -DWITH_GTEST=ON
-      - run: cmake --build .
-      - run: cmake --build . --target CalibrationTests
+      - run: cmake -S . -DPATCH_VERSION=${{ github.run_number }} -DWITH_GTEST=ON -B ./build
+      - run: cmake --build ./build
+      - run: cmake --build ./build --target CalibrationTests
       - run: ./CalibrationTests
       - name: Create Release
         id: create_release
