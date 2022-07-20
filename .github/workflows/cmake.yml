@@ -16,6 +16,7 @@ jobs:
         with:
           submodules: true
       - run: sudo apt-get install libeigen3-dev
+      - run: sudo apt-get install libboost-all-dev
       - run: cmake . -DPATCH_VERSION=${{ github.run_number }} -DWITH_GTEST=ON
       - run: cmake --build .
       - run: cmake --build . --target tests
