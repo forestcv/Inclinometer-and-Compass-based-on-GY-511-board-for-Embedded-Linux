@@ -16,7 +16,6 @@ namespace gy511::accelerometer
         Accelerometer(std::shared_ptr<I2CDevice> device);
         void init() override;
         void start() override;
-        void finish() override;
 
     private:
         bool isInited = false;
@@ -25,13 +24,10 @@ namespace gy511::accelerometer
         std::vector<CoordinatesReadingStages> coordinatesReadingQueue;
         std::vector<CoordinatesReadingStages>::iterator coordinatesReadingQueueIt;
 
-        std::atomic<bool> execution;
-
-        void exec();
         void createInitializationQueue();
         std::vector<CoordinatesReadingStages> createCoordinatesReadingQueue();
         void initialize();
-        bool readCoordinates(imu::Coordinates &coordinates);
+        bool readCoordinates(imu::Coordinates<int16_t> &coordinates) override;
     };
 };
 

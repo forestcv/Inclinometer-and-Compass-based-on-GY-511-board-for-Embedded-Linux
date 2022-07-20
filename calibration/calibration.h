@@ -17,24 +17,34 @@ namespace imu::calibration
 
     struct RotationMatrix
     {
-        double m00 = 1;     double m01 = 0;     double m02 = 0;    
-        
-        double m10 = 0;     double m11 = 1;     double m12 = 0;
+        double m00 = 1;
+        double m01 = 0;
+        double m02 = 0;
 
-        double m20 = 0;     double m21 = 0;     double m22 = 0;    
+        double m10 = 0;
+        double m11 = 1;
+        double m12 = 0;
+
+        double m20 = 0;
+        double m21 = 0;
+        double m22 = 0;
     };
+
+    Coordinates<double> correctCoordinates(Coordinates<int16_t> &coordinates,
+                                           const Offset &offset,
+                                           const RotationMatrix &rot);
 
     struct CalibrationData
     {
     public:
-        CalibrationData(int size) : size(size) 
+        CalibrationData(int size) : size_(size)
         {
             x.reserve(size);
             y.reserve(size);
             z.reserve(size);
         }
 
-        void add(const imu::Coordinates coordinates)
+        void add(const imu::Coordinates<int16_t> coordinates)
         {
             x.emplace_back(coordinates.x);
             y.emplace_back(coordinates.y);
@@ -43,7 +53,7 @@ namespace imu::calibration
 
         bool isFull()
         {
-            return x.size() >= size;
+            return x.size() >= size_;
         }
 
         CoordinateVectors get()
@@ -51,9 +61,14 @@ namespace imu::calibration
             return std::tuple{x, y, z};
         }
 
+        int size()
+        {
+            return x.size();
+        }
+
     private:
         CoordinateVector x, y, z;
-        int size = 200;
+        int size_ = 200;
     };
 }
 

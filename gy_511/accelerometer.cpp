@@ -8,7 +8,9 @@ using namespace imu;
 
 Accelerometer::Accelerometer(std::shared_ptr<I2CDevice> device) : I2cIMUDevice(device)
 {
+    // create queue of initialization stages
     createInitializationQueue();
+    // set iterator of initialization stages to the beginning of queue
     initializationQueueIt = initializationQueue.begin();
     coordinatesReadingQueue = createCoordinatesReadingQueue();
     coordinatesReadingQueueIt = coordinatesReadingQueue.begin();
@@ -16,36 +18,20 @@ Accelerometer::Accelerometer(std::shared_ptr<I2CDevice> device) : I2cIMUDevice(d
 
 void Accelerometer::init()
 {
+    // start loop for initialization workflow
     std::thread initializationThread(&Accelerometer::initialize, this);
     initializationThread.detach();
 }
 
 void Accelerometer::start()
 {
+    // start loop for sensor polling
     execution.store(true, std::memory_order_acquire);
     std::thread executionThread(&Accelerometer::exec, this);
     executionThread.detach();
 }
 
-void Accelerometer::finish()
-{
-    execution.store(false, std::memory_order_acquire);
-}
-
-void Accelerometer::exec()
-{
-    while (execution.load(std::memory_order_acquire))
-    {
-        Coordinates coordinates;
-        if (readCoordinates(coordinates))
-        {
-            for (auto handler : handlers)
-                handler(coordinates);
-        }
-        std::this_thread::sleep_for(std::chrono::milliseconds(40));
-    }
-}
-
+// create queue of initialization stages
 void Accelerometer::createInitializationQueue()
 {
     initializationQueue.reserve(10);
@@ -57,6 +43,7 @@ void Accelerometer::createInitializationQueue()
     initializationQueue.shrink_to_fit();
 }
 
+// create queue of coordinates reading stages
 std::vector<CoordinatesReadingStages> Accelerometer::createCoordinatesReadingQueue()
 {
     std::vector<CoordinatesReadingStages> queue;
@@ -112,18 +99,21 @@ void Accelerometer::initialize()
 
         if (stageSuccess)
         {
+            // go to next stage
             initializationQueueIt++;
+            // clear attempts counter
             attemptionsCounter = 0;
         }
         else
         {
+            // increment attempts counter
             attemptionsCounter++;
         }
     }
     std::cout << "init ok" << std::endl;
 }
 
-bool Accelerometer::readCoordinates(Coordinates &coordinates)
+bool Accelerometer::readCoordinates(Coordinates<int16_t> &coordinates)
 {
     static int attemptionsCounter = 0;
     coordinatesReadingQueueIt = coordinatesReadingQueue.begin();
@@ -172,26 +162,3 @@ bool Accelerometer::readCoordinates(Coordinates &coordinates)
 
     return true;
 }
-
-// bool Accelerometer::readRegister(const Registers &adress, uint8_t *buffer, uint8_t size)
-// {
-//     if (i2c_read(device.get(), static_cast<uint8_t>(adress), buffer, size) == size)
-//     {
-//         return true;
-//     }
-//     return false;
-// }
-
-// bool Accelerometer::writeRegister(const Registers &adress, const Masks &mask, uint8_t data)
-// {
-//     uint8_t buffer = 0x00;
-//     if (readRegister(adress, &buffer))
-//     {
-//         buffer = data | (buffer & (~static_cast<uint8_t>(mask)));
-//         if ((i2c_write(device.get(), static_cast<uint8_t>(adress), &buffer, 1)) == 1)
-//         {
-//             return true;
-//         }
-//     }
-//     return false;
-// }

@@ -8,7 +8,9 @@ using namespace gy511::magnetometer;
 
 Magnetometer::Magnetometer(std::shared_ptr<I2CDevice> device) : I2cIMUDevice(device)
 {
+    // create queue of initialization stages
     createInitializationQueue();
+    // set iterator of initialization stages to the beginning of queue
     initializationQueueIt = initializationQueue.begin();
     coordinatesReadingQueue = createCoordinatesReadingQueue();
     coordinatesReadingQueueIt = coordinatesReadingQueue.begin();
@@ -16,38 +18,20 @@ Magnetometer::Magnetometer(std::shared_ptr<I2CDevice> device) : I2cIMUDevice(dev
 
 void Magnetometer::init()
 {
+    // start loop for initialization workflow
     std::thread initializationThread(&Magnetometer::initialize, this);
     initializationThread.detach();
 }
 
 void Magnetometer::start()
 {
+    // start loop for sensor polling
     execution.store(true, std::memory_order_acquire);
     std::thread executionThread(&Magnetometer::exec, this);
     executionThread.detach();
 }
 
-void Magnetometer::finish()
-{
-    execution.store(false, std::memory_order_acquire);
-}
-
-#include <iostream>
-void Magnetometer::exec()
-{
-    while (execution.load(std::memory_order_acquire))
-    {
-        Coordinates coordinates;
-        if (readCoordinates(coordinates))
-        {
-            // std::cout << coordinates.x << "\t" << coordinates.y << "\t" << coordinates.z << std::endl;
-            for (auto handler : handlers)
-                handler(coordinates);
-        }
-        std::this_thread::sleep_for(std::chrono::milliseconds(40));
-    }
-}
-
+// create queue of initialization stages
 void Magnetometer::createInitializationQueue()
 {
     initializationQueue.reserve(10);
@@ -57,6 +41,7 @@ void Magnetometer::createInitializationQueue()
     initializationQueue.shrink_to_fit();
 }
 
+// create queue of coordinates reading stages
 std::vector<CoordinatesReadingStages> Magnetometer::createCoordinatesReadingQueue()
 {
     std::vector<CoordinatesReadingStages> queue;
@@ -103,18 +88,21 @@ void Magnetometer::initialize()
 
         if (stageSuccess)
         {
+            // go to next stage
             initializationQueueIt++;
+            // clear attempts counter
             attemptionsCounter = 0;
         }
         else
         {
+            // increment attempts counter
             attemptionsCounter++;
         }
     }
     std::cout << "init ok" << std::endl;
 }
 
-bool Magnetometer::readCoordinates(Coordinates &coordinates)
+bool Magnetometer::readCoordinates(Coordinates<int16_t> &coordinates)
 {
     static int attemptionsCounter = 0;
     coordinatesReadingQueueIt = coordinatesReadingQueue.begin();

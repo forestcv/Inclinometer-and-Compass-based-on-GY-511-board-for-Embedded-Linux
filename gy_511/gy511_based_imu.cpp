@@ -1,41 +1,39 @@
 #include "gy511_based_imu.h"
 #include "../i2c/i2c.h"
+#include "../imu/i2c_imu_device.h"
 #include "accelerometer.h"
 #include "magnetometer.h"
 
 #include <cstring>
 
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/json_parser.hpp>
+
 using namespace gy511;
 using namespace gy511::accelerometer;
 using namespace gy511::magnetometer;
 
-bool Gy511BasedIMU::setup()
+bool Gy511BasedIMU::setup(const std::string &pathToSettings)
 {
-    int bus = 1;
+    boost::property_tree::ptree root;
+    boost::property_tree::read_json(pathToSettings, root);
 
-    if ((bus = i2c_open("/dev/i2c-1")) == -1)
+    std::string device = root.get<std::string>("i2c_device");
+
+    int bus = 1;
+    if ((bus = i2c_open(device.c_str())) == -1)
     {
-        std::cout << "I2C open error" << std::endl;
+        throw std::runtime_error("Error: can't open i2c");
         return false;
     }
 
-    I2CDevice device;
-    auto accPtr = std::make_shared<i2c_device>(device);
-    std::memset(&device, 0, sizeof(device));
+    // parse settings from json configuration file
+    imu::I2cDeviceSettings accSettings = imu::parseDeviceSettings("accelerometer", root);
+    imu::I2cDeviceSettings magSettings = imu::parseDeviceSettings("magnetometer", root);
 
-    accPtr->bus = bus;       /* Bus 0 */
-    accPtr->addr = 0x19;     /* Slave address is 0x50, 7-bit */
-    accPtr->iaddr_bytes = 1; /* Device internal address is 1 byte */
-    accPtr->page_bytes = 8;  /* Device are capable of 16 bytes per page */
-
-    I2CDevice magDevice;
-    auto magPtr = std::make_shared<i2c_device>(magDevice);
-    std::memset(&magDevice, 0, sizeof(magDevice));
-
-    magPtr->bus = bus;       /* Bus 0 */
-    magPtr->addr = 0x1e;     /* Slave address is 0x50, 7-bit */
-    magPtr->iaddr_bytes = 1; /* Device internal address is 1 byte */
-    magPtr->page_bytes = 8;  /* Device are capable of 16 bytes per page */
+    // create accelerometer and magnetometer instances
+    accelerometer->sensor = std::make_shared<Accelerometer>(imu::createIMUDevice(accSettings, bus));
+    magnetometer->sensor = std::make_shared<Magnetometer>(imu::createIMUDevice(magSettings, bus));
 
     Imu::setup();
 

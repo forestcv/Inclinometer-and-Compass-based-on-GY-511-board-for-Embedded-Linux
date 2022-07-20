@@ -5,17 +5,34 @@
 #include <functional>
 #include <vector>
 #include <iostream>
+#include <atomic>
+
+#include <boost/property_tree/ptree.hpp>
 
 #include "../i2c/i2c.h"
 
 namespace imu
 {
+    template <typename T>
     struct Coordinates
     {
-        int16_t x = 0;
-        int16_t y = 0;
-        int16_t z = 0;
+        T x = 0;
+        T y = 0;
+        T z = 0;
     };
+
+    struct I2cDeviceSettings
+    {
+        uint8_t adress = 0;
+        uint8_t internalAdress = 0;
+        uint8_t pageBytes = 0;
+    };
+
+    I2cDeviceSettings parseDeviceSettings(const std::string &device_name,
+                                          const boost::property_tree::ptree &settingsRoot);
+
+    std::shared_ptr<i2c_device> createIMUDevice(const I2cDeviceSettings &settings,
+                                                int bus);
 
     class I2cIMUDevice
     {
@@ -23,8 +40,8 @@ namespace imu
         I2cIMUDevice(std::shared_ptr<I2CDevice> device) : device(device) {}
         virtual void init() = 0;
         virtual void start() = 0;
-        virtual void finish() = 0;
-        void registerCoordinatesHandler(std::function<void(const Coordinates &)> handler)
+        void finish();
+        void registerCoordinatesHandler(std::function<void(const Coordinates<int16_t> &)> handler)
         {
             handlers.emplace_back(handler);
         }
@@ -43,8 +60,13 @@ namespace imu
             RawCoordinate z;
         } rawCoordinates;
 
+        std::atomic<bool> execution;
         std::shared_ptr<I2CDevice> device = nullptr;
-        std::vector<std::function<void(const Coordinates &)>> handlers;
+        std::vector<std::function<void(const Coordinates<int16_t> &)>> handlers;
+
+        void exec();
+
+        virtual bool readCoordinates(imu::Coordinates<int16_t> &coordinates) = 0;
 
         template <typename Register>
         bool readRegister(const Register &adress, uint8_t *buffer, uint8_t size = 1)
@@ -72,7 +94,6 @@ namespace imu
             return false;
         }
     };
-
 };
 
 #endif // I2C_IMU_DEVICE_H

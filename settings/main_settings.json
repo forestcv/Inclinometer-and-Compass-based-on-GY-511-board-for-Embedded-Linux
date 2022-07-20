@@ -1,0 +1,15 @@
+{
+    "i2c_device" : "/dev/i2c-1",
+    "accelerometer" :
+    {
+        "i2c_adress" : 25,
+        "internal_address" : 1,
+        "page_bytes" : 8
+    },
+    "magnetometer" :
+    {
+        "i2c_adress" : 30,
+        "internal_address" : 1,
+        "page_bytes" : 8
+    }
+}

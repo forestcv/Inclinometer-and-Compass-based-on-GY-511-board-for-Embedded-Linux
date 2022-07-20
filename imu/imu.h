@@ -5,6 +5,7 @@
 #include <condition_variable>
 #include <mutex>
 
+#include "imu_sensor.h"
 #include "i2c_imu_device.h"
 #include "../calibration/calibration.h"
 
@@ -20,7 +21,8 @@ namespace imu
         double yaw = 0;
     };
 
-    enum class CalibrationType {
+    enum class CalibrationType
+    {
         MinMax,
         EllipsoidFit
     };
@@ -30,6 +32,9 @@ namespace imu
         MEASUREMENT,
         CALIBRATION
     };
+
+    void compensateTilt(Coordinates<double> &magCoordinates,
+                                        double pitch, double roll);
 
     class Imu
     {
@@ -44,38 +49,21 @@ namespace imu
         void exec();
         void updateAngles();
         void calibration();
-        void minMaxCalibrationStart();
 
-        void accCoordinatesHandler(const imu::Coordinates &coordinates);
-        void magCoordinatesHandler(const imu::Coordinates &coordinates);
+        void accCoordinatesHandler(const imu::Coordinates<int16_t> &coordinates);
+        void magCoordinatesHandler(const imu::Coordinates<int16_t> &coordinates);
 
         std::atomic<bool> execution;
 
-        std::condition_variable accDataReadyCV;
-        std::condition_variable magDataReadyCV;
-        std::mutex accMutex;
-        std::mutex magMutex;
-
-        imu::Coordinates currentMagCoordinates;
-        imu::Coordinates currentAccCoordinates;
-
-        std::shared_ptr<imu::I2cIMUDevice> magnetometer = nullptr;
-        std::shared_ptr<imu::I2cIMUDevice> accelerometer = nullptr;
+        std::shared_ptr<imu::ImuSensor> magnetometer = nullptr;
+        std::shared_ptr<imu::ImuSensor> accelerometer = nullptr;
 
         Angles angles;
 
-        imu::calibration::Offset offset;
+        // imu::calibration::Offset offset;
+        // imu::calibration::Offset rot;
         imu::Mode mode = imu::Mode::MEASUREMENT;
         imu::CalibrationType calibrationType = imu::CalibrationType::MinMax;
-
-        std::unique_ptr<imu::calibration::CalibrationData> accCalibrationData = nullptr;
-        std::unique_ptr<imu::calibration::CalibrationData> magCalibrationData = nullptr;
-
-        imu::calibration::Offset accOffset;
-        imu::calibration::Offset magOffset;
-
-        imu::calibration::RotationMatrix accRotation;
-        imu::calibration::RotationMatrix magRotation;
     };
 }
 

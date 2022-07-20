@@ -9,7 +9,7 @@ namespace gy511
     class Gy511BasedIMU : public imu::Imu
     {
     public:
-        bool setup() override;
+        bool setup(const std::string &pathToSettings);
     };
 }
 
