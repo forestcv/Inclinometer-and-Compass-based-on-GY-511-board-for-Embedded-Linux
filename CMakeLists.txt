@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.2)
 
-project(gy_511)
+project(GY511)
 
 find_package (Eigen3 3.3 REQUIRED NO_MODULE)
 
