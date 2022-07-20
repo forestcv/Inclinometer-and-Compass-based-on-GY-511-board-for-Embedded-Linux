@@ -55,7 +55,7 @@ if(WITH_GTEST)
                     calibration/min_max_calibration.cpp
                     )
 
-    set_target_properties(tests PROPERTIES
+    set_target_properties(CalibrationTests PROPERTIES
         CXX_STANDARD 17
         CXX_STANDARD_REQUIRED ON
     )
