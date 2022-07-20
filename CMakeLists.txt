@@ -49,7 +49,7 @@ if(WITH_GTEST)
     set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
     FetchContent_MakeAvailable(googletest)
 
-    add_executable(tests        
+    add_executable(CalibrationTests        
                     tests/tests.cpp
                     calibration/ellipsoid_fit_calibration.cpp
                     calibration/min_max_calibration.cpp
@@ -59,5 +59,5 @@ if(WITH_GTEST)
         CXX_STANDARD 17
         CXX_STANDARD_REQUIRED ON
     )
-    target_link_libraries(tests gtest_main Eigen3::Eigen -lpthread)
+    target_link_libraries(CalibrationTests gtest_main Eigen3::Eigen -lpthread)
 endif()
